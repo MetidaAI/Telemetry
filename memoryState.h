@@ -4,6 +4,7 @@
 
 #include <string>
 #include <fstream>
+#include <limits>
 
 class memoryState {
 public:

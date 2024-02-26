@@ -1,14 +1,54 @@
 #include <logger.h>
 #include "thermalState.h"
 
-void thermalState::parseConfig(const std::list<std::string>& sensors, std::list<thermalState::thermalSensor> &sensorDst) {
-    for (const auto &item : sensors){
-        thermalState::thermalSensor t;
-        std::vector<std::string> v;
-        utils::tokenize(item, ":", v);
-        t.name = v[0];
-        t.path = v[1];
-        sensorDst.emplace_back(t);
+std::string getCPUPath(){
+    for (const auto& entry : std::filesystem::directory_iterator("/sys/class/hwmon/")) {
+        std::string nameFile = entry.path().generic_string() + "/name";
+        std::ifstream file(nameFile);
+        if (file.is_open()) {
+            std::string line;
+            getline(file, line);
+            if(strcmp(line.c_str(), "coretemp") == 0){
+               file.close();
+               return entry.path();
+            }
+            file.close();
+        }
+    }
+    return "";
+}
+
+void thermalState::searchTempFiles(std::list<thermalState::thermalSensor> &sensorDst) {
+    std::string cpuPath = getCPUPath();
+    if(!cpuPath.empty()) {
+        for (const auto &entry: std::filesystem::directory_iterator(cpuPath)) {
+            if (!entry.is_directory()) {
+                std::string file_name = entry.path().filename().string();
+                if (file_name.find("temp") != std::string::npos && file_name.find("_input") != std::string::npos) {
+                    thermalState::thermalSensor t;
+                    t.path = entry.path();
+
+                    std::string labelPath = entry.path().parent_path();
+                    labelPath += "/temp";
+                    for(int i = 0; i < entry.path().filename().generic_string().length() - TEMP_FNAME_LENGTH+1; i++)
+                        labelPath += entry.path().filename().c_str()[4+i];
+                    labelPath += "_label";
+
+                    std::ifstream label(labelPath);
+                    if(label.is_open()){
+                        std::string line;
+                        getline(label, line);
+                        t.name = line;
+                        label.close();
+                    }else{
+                        logger::error("Failed to open file: ", labelPath);
+                    }
+                    sensorDst.emplace_back(t);
+                }
+            }
+        }
+    }else{
+        logger::warn("Can't find CPU temperature path!!");
     }
 }
 

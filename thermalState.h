@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <fstream>
 
+#define TEMP_FNAME_LENGTH 11
+
 class thermalState {
 public:
     struct thermalSensor{
@@ -17,8 +19,8 @@ public:
         std::string path;
     };
 
-    static void parseConfig(const std::list<std::string> &sensors, std::list<thermalState::thermalSensor> &sensorDst);
     static void getThermalState(const std::list<thermalState::thermalSensor> &sensors, std::map<std::string, double> &state);
+    static void searchTempFiles(std::list<thermalState::thermalSensor> &sensorDst);
 };
 
 

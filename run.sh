@@ -1,1 +1,1 @@
-docker run --privileged --pid=host -it --name telemetry -d mtd/telemetry
+docker run --privileged --pid=host -it --name telemetry --mount type=bind,source=/root/Client/configs/telemetry.json,target=/app/Telemetry.json -d mtd/telemetry

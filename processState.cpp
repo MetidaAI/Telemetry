@@ -2,18 +2,18 @@
 #include "processState.h"
 
 void processState::getProcessState(processState::process& process, const std::string& processName) {
-    std::string cmd = "top -n 1 -b | grep " + processName;
+    std::string cmd = "top -b -n 1 -w 512 | grep " + processName;
     std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
     if (!pipe) {
         logger::error("popen() failed!");
         return;
     }
 
-    char buffer[128];
-    bzero(buffer, 128);
+    char buffer[1024];
+    bzero(buffer, 1024);
     process.name = processName;
     while (!feof(pipe.get())) {
-        if (fgets(buffer, 128, pipe.get()) != nullptr) {
+        if (fgets(buffer, 1024, pipe.get()) != nullptr) {
             //парсим полученную строку
             std::vector<std::string> parsed;
             utils::tokenize(buffer,  " ", parsed);

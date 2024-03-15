@@ -24,6 +24,7 @@ int main() {
     core::init(WITH_DB, WITH_DNN, WITH_S3, WITH_REDIS);
     config::set(DEBUG, false);
     config::set(CLIENT_ID, 1);
+    config::set(CPU_FULL_INFO, false);
 
     std::list<std::string> sensors;
 
@@ -81,11 +82,13 @@ int main() {
         cpuState.clear();
         cpuState::getCPUState(cInfo.cores, cpuState);
 
-        json["cpu"]["name"] = cInfo.name;
-        json["cpu"]["flags"] = cInfo.flags;
-        if(config::get<bool>(DEBUG)) {
-            logger::info("CPU", cInfo.name);
-            logger::info("Flags", cInfo.flags);
+        if(config::get<bool>(CPU_FULL_INFO)) {
+            json["cpu"]["name"] = cInfo.name;
+            json["cpu"]["flags"] = cInfo.flags;
+            if (config::get<bool>(DEBUG)) {
+                logger::info("CPU", cInfo.name);
+                logger::info("Flags", cInfo.flags);
+            }
         }
 
         if (cpuState.size() == cInfo.cores)
@@ -107,7 +110,8 @@ int main() {
         json["mem"]["ram"]["physicTotal"] = mState.physicTotal;
         json["mem"]["ram"]["swapTotal"] = mState.swapTotal;
         json["mem"]["ram"]["swapAvailable"] = mState.swapAvailable;
-        json["timestamp"] = std::time(nullptr);
+        long ts = time(nullptr);
+        json["timestamp"] = ts;
 
         if(config::get<bool>(DEBUG)) {
             logger::info(
@@ -117,7 +121,7 @@ int main() {
                     "Virtual mem: " + std::to_string((mState.swapTotal - mState.swapAvailable) / 1024) + "Mb" + "/" +
                     std::to_string(mState.swapTotal / 1024) + "Mb");
         }
-        long ts = time(nullptr);
+
         utils::writeSQLToFile("INSERT INTO telemetry SET "
             "clientID="+std::to_string(config::get<int>(CLIENT_ID))+
             ", data='"+nlohmann::to_string(json)+

@@ -1,4 +1,4 @@
-FROM mtd/builder:DNN as builder
+FROM mtd/builder:noDNN as builder
 ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR /builder/
 
